@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "cpptoml.h"
+#include "transform.hpp"
 
 class OptionsParser
 {
@@ -12,7 +13,7 @@ public:
 
   // TODO: modifier le type de retour en cohérence
   // avec la structure de données renvoyée.
-  void parse(void);
+  Transformation* parse(void);
 
 private:
   std::string m_file_name;
