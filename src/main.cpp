@@ -6,6 +6,7 @@
 #include <tuple>
 
 #include "options.hpp"
+#include "viewer.hpp"
 
 void print_usage()
 {
@@ -39,6 +40,9 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
     }
     file_name = argv[2];
+    Viewer viewer;
+    viewer.view(file_name);
+
   } else if (command == "-t" || command == "--transform") {
     if (argc < 3) {
       std::cerr << "Error: missing file\n";
@@ -47,7 +51,7 @@ int main(int argc, char **argv)
     }
     file_name = argv[2];
     auto op = new OptionsParser(file_name);
-    /*auto params = */op->parse();
+    /* TODO */
     delete op;
   } else {
     std::cerr << "Error: unknown command\n";
