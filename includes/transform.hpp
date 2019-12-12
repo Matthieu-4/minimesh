@@ -11,6 +11,7 @@
 #include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkXMLWriter.h>
 #include <vtkTransformFilter.h>
+#include <vtkAppendFilter.h>
 
 class Transformation
 {
@@ -21,7 +22,7 @@ protected:
 
   Transformation(void){}
 
-  const void write(vtkDataSet* data){
+  const void write(vtkUnstructuredGrid* data){
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
     writer->SetFileName(_outputFile.c_str());
     writer->SetInputData(data);
@@ -60,7 +61,24 @@ public:
          _inputFiles(meshes) {}
 
   virtual void transform(void){
-    /* TODO */
+    auto readers = new vtkSmartPointer<vtkXMLUnstructuredGridReader>[_inputFiles.size()];
+
+    vtkSmartPointer<vtkAppendFilter> af = vtkSmartPointer<vtkAppendFilter>::New();
+    af->SetMergePoints(_mergeNodes);
+    //af->SetTolerance(1e-16);
+
+    int i = 0;
+    for(auto& file : _inputFiles){
+      readers[i] = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+      readers[i]->SetFileName(file.c_str());
+      readers[i]->Update();
+      af->AddInputConnection(readers[i]->GetOutputPort());
+      af->Update();
+      i++;
+    }
+
+    write(af->GetOutput());
+    delete[] readers;
   }
 };
 
@@ -83,15 +101,17 @@ public:
 
   virtual void transform(void){
     vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-
     reader->SetFileName(_inputFile.c_str());
     reader->Update();
+
     vtkSmartPointer<vtkGeneralTransform> tr = vtkSmartPointer<vtkGeneralTransform>::New();
     tr->Translate(_vector[0], _vector[1], _vector[2]);
+
     vtkSmartPointer<vtkTransformFilter> transformFilter = vtkSmartPointer<vtkTransformFilter>::New();
     transformFilter->SetInputConnection(reader->GetOutputPort());
     transformFilter->SetTransform(tr);
     transformFilter->Update();
-    write(transformFilter->GetOutput());
+
+    write(vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput()));
   }
 };

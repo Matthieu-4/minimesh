@@ -11,8 +11,6 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkProperty.h>
 
-#include <vtkSphereSource.h>
-
 class Viewer
 {
 public:
@@ -21,22 +19,21 @@ public:
 
 public:
   const void view(std::string file){
-    //vtkSmartPointer<vtkSphereSource> reader = vtkSmartPointer<vtkSphereSource>::New();
     vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
     reader->SetFileName(file.c_str());
     reader->Update();
 
     vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
     mapper->SetInputConnection(reader->GetOutputPort());
+
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
-    //actor->GetProperty()->VertexVisibilityOn();
     actor->GetProperty()->EdgeVisibilityOn();
-    //actor->GetProperty()->SetColor(1.0, .0, .0);
 
     vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
     vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
     renderWindow->AddRenderer(renderer);
+
     vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     renderWindowInteractor->SetRenderWindow(renderWindow);
 
