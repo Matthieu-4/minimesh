@@ -13,6 +13,8 @@
 #include <vtkTransformFilter.h>
 #include <vtkAppendFilter.h>
 
+#include "quality.hpp"
+
 class Transformation
 {
 
@@ -22,20 +24,38 @@ protected:
 
   Transformation(void){}
 
-  const void write(vtkUnstructuredGrid* data){
+  const void write(vtkSmartPointer<vtkUnstructuredGrid> data){
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
     writer->SetFileName(_outputFile.c_str());
     writer->SetInputData(data);
     writer->Write();
   }
+
+  virtual vtkSmartPointer<vtkUnstructuredGrid> transform(void) = 0;
+
 public:
   virtual ~Transformation(void) = default;
+
   Transformation( const std::string outputFile,
                   const bool computeQuality):
                   _outputFile(outputFile),
                   _computeQuality(computeQuality){}
 
-  virtual void transform(void) = 0;
+  virtual void Update(void){
+
+    vtkSmartPointer<vtkUnstructuredGrid> data = transform();
+
+    if(_computeQuality){
+
+      QualityChecker* qc = new QualityChecker(data);
+      qc->Update();
+      write(qc->GetOutput());
+      delete qc;
+
+    }else{
+      write(data);
+    }
+  }
 
   const std::string GetOutput(void){
     return _outputFile;
@@ -60,7 +80,7 @@ public:
          _mergeNodes(mergeNodes),
          _inputFiles(meshes) {}
 
-  virtual void transform(void){
+  virtual vtkSmartPointer<vtkUnstructuredGrid> transform(void){
     auto readers = new vtkSmartPointer<vtkXMLUnstructuredGridReader>[_inputFiles.size()];
 
     vtkSmartPointer<vtkAppendFilter> af = vtkSmartPointer<vtkAppendFilter>::New();
@@ -77,8 +97,8 @@ public:
       i++;
     }
 
-    write(af->GetOutput());
     delete[] readers;
+    return af->GetOutput();
   }
 };
 
@@ -99,7 +119,7 @@ public:
               _vector(coords),
               _inputFile(mesh) {}
 
-  virtual void transform(void){
+  virtual vtkSmartPointer<vtkUnstructuredGrid> transform(void){
     vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
     reader->SetFileName(_inputFile.c_str());
     reader->Update();
@@ -112,6 +132,6 @@ public:
     transformFilter->SetTransform(tr);
     transformFilter->Update();
 
-    write(vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput()));
+    return vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput());
   }
 };

@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     file_name = argv[2];
     auto op = new OptionsParser(file_name);
     Transformation* transformation = op->parse();
-    transformation->transform();
+    transformation->Update();
 
     delete transformation;
     delete op;
